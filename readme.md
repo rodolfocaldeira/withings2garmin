@@ -4,7 +4,7 @@ Small toolkit for moving body-weight history from a Withings export into Garmin 
 
 There are two independent pieces:
 
-1. **Convert** a Withings CSV export into Garmin's "Body" import format (`main2.js`, Node).
+1. **Convert** a Withings CSV export into Garmin's "Body" import format (`withings_to_garmin.py`).
 2. **Clean up** bad weigh-ins already in Garmin Connect (`cleanup_weighins.py`, Python).
 
 ## Workflow
@@ -21,11 +21,12 @@ Date,"Weight (kg)","Fat mass (kg)","Bone mass (kg)","Muscle mass (kg)","Hydratio
 ### 2. Convert to Garmin format
 
 ```sh
-npm install        # only needed for main.js (see below); main2.js has no dependencies
-node main2.js
+python3 withings_to_garmin.py data/wi_weight.csv data/garmin_upload.csv
+# or let it pick the output name:
+python3 withings_to_garmin.py data/wi_weight.csv   # writes garmin_upload.<yyyymmdd-hhmmss>.csv in the current directory
 ```
 
-`main2.js` reads `wi_weight.csv` and writes `garmin_upload.csv`. To use other files, edit `inputFilename` / `outputFilename` near the bottom of the script. For each row it:
+`withings_to_garmin.py` takes the Withings export as its input and writes the Garmin file to the output path. If you leave out the output, it creates `garmin_upload.<yyyymmdd-hhmmss>.csv` in the current directory. It exits with status 1 and prints an error if the input can't be read. For each row it:
 
 - splits the timestamp into `date` and `time`
 - computes BMI from a hard-coded height (**173 cm**, the third argument of `convertWithingsToGarmin`; change it to yours)
@@ -105,17 +106,18 @@ Adjust these to your own data before running with `--execute`.
 
 | File | Contents |
 | --- | --- |
-| `all_weighins.csv` | Full export of the scanned range. The previous export is kept as `all_weighins.<timestamp>.csv`. |
-| `backup_deleted_weighins.csv` | Backup of every entry selected for deletion, merged across runs. Use it to restore anything deleted by mistake. |
-| `deletion_log.csv` | One row per delete attempt (`deleted`, `already_gone` or `failed: ...`). |
+| `data/all_weighins.csv` | Full export of the scanned range. The previous export is kept as `data/all_weighins.<timestamp>.csv`. |
+| `data/backup_deleted_weighins.csv` | Backup of every entry selected for deletion, merged across runs. Use it to restore anything deleted by mistake. |
+| `data/deletion_log.csv` | One row per delete attempt (`deleted`, `already_gone` or `failed: ...`). |
 
 ## Other files
 
 | File | Notes |
 | --- | --- |
-| `main.js` | Earlier converter attempt. Its code is commented out, so it currently only prints "Hello world". Superseded by `main2.js`. |
-| `withings_data.csv`, `wi_weight.csv`, `w3.csv`, `garmin_upload.csv` | Sample and working data for the converter. |
+| `data/withings_data.csv`, `data/wi_weight.csv`, `data/w3.csv`, `data/garmin_upload.csv` | Sample and working data for the converter. |
+
+All CSV files live in `data/`, which the scripts create when needed. The cleanup script's output files go there too.
 
 ## Privacy
 
-The CSV files hold personal health data. Don't commit or share them. If this becomes a git repo, add `*.csv`, `.venv/` and `node_modules/` to `.gitignore`.
+The CSV files hold personal health data. Don't commit or share them. `.gitignore` already excludes `*.csv`, so the files in `data/` stay out of git.

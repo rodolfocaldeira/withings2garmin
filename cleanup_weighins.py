@@ -36,9 +36,10 @@ THRESHOLD_KG = 105.0
 MAX_SELECTED_FRACTION = 0.90
 
 HERE = Path(__file__).resolve().parent
-BACKUP_CSV = HERE / "backup_deleted_weighins.csv"
-ALL_CSV = HERE / "all_weighins.csv"
-DELETE_LOG = HERE / "deletion_log.csv"
+DATA_DIR = HERE / "data"
+BACKUP_CSV = DATA_DIR / "backup_deleted_weighins.csv"
+ALL_CSV = DATA_DIR / "all_weighins.csv"
+DELETE_LOG = DATA_DIR / "deletion_log.csv"
 DEFAULT_TOKENSTORE = os.getenv("GARMINTOKENS", "~/.garminconnect")
 
 # Fields copied from each Garmin weight record into the CSVs (if present).
@@ -262,6 +263,7 @@ def report_remaining(rows: list[dict]) -> None:
 
 
 def main() -> None:
+    DATA_DIR.mkdir(exist_ok=True)
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--execute", action="store_true", help="actually delete (default: dry run)")
