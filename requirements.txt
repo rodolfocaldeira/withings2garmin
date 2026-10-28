@@ -1,0 +1,2 @@
+# Requires Python >= 3.12
+garminconnect==0.3.20

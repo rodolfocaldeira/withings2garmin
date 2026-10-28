@@ -1,0 +1,20 @@
+# Dependencies
+.venv/
+node_modules/
+
+# Python
+__pycache__/
+*.pyc
+
+# Personal health data / generated exports
+*.csv
+
+# Credentials and tokens
+.env
+.garminconnect/
+.garth/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
