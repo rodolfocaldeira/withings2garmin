@@ -23,10 +23,10 @@ Date,"Weight (kg)","Fat mass (kg)","Bone mass (kg)","Muscle mass (kg)","Hydratio
 ```sh
 python3 withings_to_garmin.py data/wi_weight.csv data/garmin_upload.csv
 # or let it pick the output name:
-python3 withings_to_garmin.py data/wi_weight.csv   # writes garmin_upload.<yyyymmdd-hhmmss>.csv in the current directory
+python3 withings_to_garmin.py data/wi_weight.csv   # writes data/garmin_upload.<yyyymmdd-hhmmss>.csv
 ```
 
-`withings_to_garmin.py` takes the Withings export as its input and writes the Garmin file to the output path. If you leave out the output, it creates `garmin_upload.<yyyymmdd-hhmmss>.csv` in the current directory. It exits with status 1 and prints an error if the input can't be read. For each row it:
+`withings_to_garmin.py` takes the Withings export as its input and writes the Garmin file to the output path. If you leave out the output, it creates `data/garmin_upload.<yyyymmdd-hhmmss>.csv`. It exits with status 1 and prints an error if the input can't be read. For each row it:
 
 - splits the timestamp into `date` and `time`
 - computes BMI from a hard-coded height (**173 cm**, the third argument of `convertWithingsToGarmin`; change it to yours)
@@ -109,6 +109,77 @@ Adjust these to your own data before running with `--execute`.
 | `data/all_weighins.csv` | Full export of the scanned range. The previous export is kept as `data/all_weighins.<timestamp>.csv`. |
 | `data/backup_deleted_weighins.csv` | Backup of every entry selected for deletion, merged across runs. Use it to restore anything deleted by mistake. |
 | `data/deletion_log.csv` | One row per delete attempt (`deleted`, `already_gone` or `failed: ...`). |
+
+## Automatic sync (Withings → Garmin)
+
+`sync_weights.sh` runs the whole pipeline in one command. It downloads recent weigh-ins from the Withings API (`withings_download.py`), then uploads only the ones Garmin Connect doesn't have yet (`upload_new_weighins.py`).
+
+### Setup
+
+1. **Create a Withings app** at <https://developer.withings.com/dashboard> and set its callback URL to `http://localhost:8765/callback`. This is the default redirect URI; if you use another, set `WITHINGS_REDIRECT_URI` to match.
+2. **Create a `.env` file** in the project folder with your app's credentials:
+
+   ```
+   WITHINGS_CLIENT_ID=your-client-id
+   WITHINGS_CLIENT_SECRET=your-client-secret
+   WITHINGS_REDIRECT_URI=http://localhost:8765/callback
+   ```
+
+   The sync script loads this file automatically. Keep it private; `.gitignore` excludes it.
+3. **Install the Garmin library** in the `.venv` virtual environment, as in the cleanup section above:
+
+   ```sh
+   python3 -m venv .venv
+   .venv/bin/pip install -r requirements.txt
+   ```
+
+The first Withings download opens your browser so you can approve access. The resulting tokens are saved to `withings_tokens.json`, which is owner-only and gitignored. Garmin login uses the same credentials and token store as `cleanup_weighins.py` (`GARMIN_EMAIL` / `GARMIN_PASSWORD`, or prompts).
+
+### Usage
+
+```sh
+# Download the last 7 days and show what would be uploaded. Nothing is uploaded.
+./sync_weights.sh
+
+# Download the last 30 days instead
+./sync_weights.sh --days 30
+
+# Upload the new weigh-ins (asks you to type UPLOAD)
+./sync_weights.sh --execute
+
+# Upload without the confirmation prompt
+./sync_weights.sh --execute --yes
+```
+
+| Option | Meaning |
+| --- | --- |
+| `--days N` | Download only the last N days, including today. Default: 7. |
+| `--execute` | Upload the missing weigh-ins. Without it, the upload step is a dry run. |
+| `--yes` | With `--execute`, skip the `UPLOAD` confirmation. |
+
+### How "already in Garmin" is decided
+
+A Withings weigh-in counts as already present when Garmin has a weigh-in on the same day whose weight differs by at most 0.1 kg. Each Garmin weigh-in can match only one Withings weigh-in, so two genuine same-day readings are not collapsed into one. Everything else is uploaded with its original local time and UTC time.
+
+### Running the scripts individually
+
+```sh
+# Download only, to data/withings_weights.csv (overwritten on each run)
+.venv/bin/python withings_download.py --days 7
+
+# Compare and upload (dry run unless --execute)
+.venv/bin/python upload_new_weighins.py
+```
+
+`withings_download.py` also accepts `--since YYYY-MM-DD`, `--until YYYY-MM-DD` and `--reauth` (to log in to Withings again). `upload_new_weighins.py` also accepts `--input`, `--max-upload N` and `--delay SECONDS`.
+
+### Files it produces
+
+| File | Contents |
+| --- | --- |
+| `data/withings_weights.csv` | Weigh-ins from the last download (`date,time,weight_kg,timestamp,grpid`). Replaced on every run. |
+| `data/upload_log.csv` | One row per upload attempt (`uploaded` or `failed: ...`). |
+| `withings_tokens.json` | Withings login tokens. Owner-only, gitignored. Delete it or use `--reauth` to log in again. |
 
 ## Other files
 

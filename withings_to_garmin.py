@@ -92,8 +92,10 @@ def convert_withings_to_garmin(input_path: Path, output_path: Path, height_cm: f
 
 
 def default_output_path() -> Path:
-    """Return a timestamped name like garmin_upload.20261028-171600.csv in the current directory."""
-    return Path(f"garmin_upload.{datetime.now():%Y%m%d-%H%M%S}.csv")
+    """Return a timestamped name like data/garmin_upload.20261028-171600.csv."""
+    data_dir = Path(__file__).resolve().parent / "data"
+    data_dir.mkdir(exist_ok=True)
+    return data_dir / f"garmin_upload.{datetime.now():%Y%m%d-%H%M%S}.csv"
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -105,7 +107,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "output",
         type=Path,
         nargs="?",
-        help="Garmin CSV to write (default: garmin_upload.<yyyymmdd-hhmmss>.csv)",
+        help="Garmin CSV to write (default: data/garmin_upload.<yyyymmdd-hhmmss>.csv)",
     )
     return parser.parse_args(argv)
 

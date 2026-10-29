@@ -13,7 +13,7 @@ callback URL to WITHINGS_REDIRECT_URI, then export the credentials:
     export WITHINGS_REDIRECT_URI=http://localhost:8765/callback   # optional
 
 Usage:
-    python withings_download.py                    # all weights -> withings_weights.csv
+    python withings_download.py                    # all weights -> data/withings_weights.csv
     python withings_download.py --since 2025-01-01
     python withings_download.py --days 7           # last 7 days only
     python withings_download.py --out other.csv --reauth
@@ -39,7 +39,8 @@ from zoneinfo import ZoneInfo
 
 HERE = Path(__file__).resolve().parent
 TOKEN_FILE = HERE / "withings_tokens.json"
-DEFAULT_OUT = HERE / "withings_weights.csv"
+DATA_DIR = HERE / "data"
+DEFAULT_OUT = DATA_DIR / "withings_weights.csv"
 DEFAULT_REDIRECT_URI = "http://localhost:8765/callback"
 
 AUTH_URL = "https://account.withings.com/oauth2_user/authorize2"
@@ -298,6 +299,7 @@ def main() -> None:
 
     print(f"Fetching weights {since} .. {until} ...")
     rows = fetch_weights(tokens["access_token"], start_ts, end_ts)
+    args.out.parent.mkdir(parents=True, exist_ok=True)
     write_csv(args.out, rows)
 
     print(f"Wrote {len(rows)} weigh-ins to {args.out}")

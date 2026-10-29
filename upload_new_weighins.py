@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Upload Withings weigh-ins that are not yet in Garmin Connect.
 
-Reads withings_weights.csv (written by withings_download.py), fetches the Garmin
+Reads data/withings_weights.csv (written by withings_download.py), fetches the Garmin
 weigh-ins for the same date range, and treats a Withings weigh-in as already
 present when Garmin has a weigh-in on the same day whose weight differs by at
 most 0.1 kg. Each Garmin weigh-in can match only one Withings weigh-in, so two
@@ -23,9 +23,10 @@ from pathlib import Path
 import cleanup_weighins as cw  # login, fetch_all and the Garmin helpers
 
 HERE = Path(__file__).resolve().parent
-DEFAULT_IN = HERE / "withings_weights.csv"
-UPLOAD_LOG = HERE / "upload_log.csv"
-TOLERANCE_KG = 0.2
+DATA_DIR = HERE / "data"
+DEFAULT_IN = DATA_DIR / "withings_weights.csv"
+UPLOAD_LOG = DATA_DIR / "upload_log.csv"
+TOLERANCE_KG = 0.1
 MAX_CONSECUTIVE_FAILURES = 5
 
 log = logging.getLogger("upload")
@@ -127,6 +128,7 @@ def main() -> None:
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO,
                         format="%(asctime)s %(levelname)s %(message)s", datefmt="%H:%M:%S")
     logging.getLogger("garminconnect").setLevel(logging.WARNING)
+    DATA_DIR.mkdir(exist_ok=True)
 
     withings = load_withings(args.input)
     if not withings:
