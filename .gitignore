@@ -13,6 +13,7 @@ __pycache__/
 .env
 .garminconnect/
 .garth/
+withings_tokens.json
 
 # OS / editor
 .DS_Store

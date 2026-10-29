@@ -9,7 +9,7 @@ Logic:
 5. Formats the date and time.
 6. Prepends the "Body" header required by Garmin.
 
-Python port of main2.js. Standard library only.
+Standard library only.
 """
 
 from __future__ import annotations
